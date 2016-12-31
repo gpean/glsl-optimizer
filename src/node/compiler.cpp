@@ -1,10 +1,6 @@
 #include "compiler.h"
 
-using namespace v8;
-using namespace node;
-
-
-Persistent<Function> Compiler::constructor;
+Nan::Persistent<v8::Function> Compiler::constructor;
 
 //----------------------------------------------------------------------
 
@@ -34,54 +30,53 @@ void Compiler::release()
 
 //----------------------------------------------------------------------
 
-void Compiler::Init(Handle<Object> exports)
+void Compiler::Init(v8::Local<v8::Object> exports) 
 {
-	NanScope();
+	using namespace v8;
+	Nan::HandleScope scope;
 
-	// Prepare constructor template
-	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
-	
-	tpl->SetClassName(NanNew<String>("Compiler"));
+    // Prepare constructor template
+	Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+	tpl->SetClassName(Nan::New("Compiler").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 	// Prototype
-	NanSetPrototypeTemplate(tpl, "dispose", NanNew<FunctionTemplate>(Dispose));
+	Nan::SetPrototypeMethod(tpl, "dispose", Dispose);
 
 	// Export the class
-	NanAssignPersistent<Function>(constructor, tpl->GetFunction());
-	exports->Set(NanNew<String>("Compiler"), tpl->GetFunction());
+    constructor.Reset(tpl->GetFunction());
+	exports->Set(Nan::New("Compiler").ToLocalChecked(), tpl->GetFunction());
 }
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Compiler::New)
+void Compiler::New(const Nan::FunctionCallbackInfo<v8::Value>& info)
 {
-	NanScope();
-
-	if (args.IsConstructCall()) {
-		glslopt_target target = kGlslTargetOpenGL;
-		if (args[0]->IsInt32()) 
-			target = (glslopt_target)args[0]->Int32Value();
-		else if (args[0]->IsBoolean())
-			target = (glslopt_target)( (int)args[0]->BooleanValue() );
-
-		Compiler* obj = new Compiler(target);
-		obj->Wrap(args.This());
-		NanReturnValue(args.This());
-	} else {
-		Local<Function> cons = NanNew<Function>(constructor);
-		NanReturnValue(cons->NewInstance());
-	}
+    using namespace v8;
+	Nan::HandleScope scope;
+    if (info.IsConstructCall()) { // Invoked as constructor: `new Compiler(...)`
+        glslopt_target target = kGlslTargetOpenGL;
+		if (info[0]->IsInt32()) 
+			target = (glslopt_target)info[0]->Int32Value();
+		else if (info[0]->IsBoolean())
+			target = (glslopt_target)( (int)info[0]->BooleanValue() );
+        auto obj = new Compiler(target);
+        obj->Wrap(info.This());
+        info.GetReturnValue().Set(info.This());
+    } else { // Invoked as plain function `Compiler(...)`, turn into construct call.
+        const int argc = 1;
+        v8::Local<v8::Value> argv[argc] = { info[0] };
+        v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
+        info.GetReturnValue().Set(cons->NewInstance(argc, argv));
+    }
 }
 
 //----------------------------------------------------------------------
 
 NAN_METHOD(Compiler::Dispose)
 {
-	NanScope();
-
-	Compiler* obj = ObjectWrap::Unwrap<Compiler>(args.This());
-	obj->release();
-
-	NanReturnUndefined();
+    using namespace v8;
+    Nan::HandleScope scope;
+    auto obj = ObjectWrap::Unwrap<Compiler>(info.Holder());
+    obj->release();
 }

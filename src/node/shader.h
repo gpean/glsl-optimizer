@@ -1,14 +1,15 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include "compiler.h"
-#include <node.h>
+
 #include <nan.h>
+
 #include <glsl_optimizer.h>
 
-class Shader : public node::ObjectWrap {
+class Shader : public Nan::ObjectWrap 
+{
 public:
-	static void Init(v8::Handle<v8::Object> exports);
+	static void Init(v8::Local<v8::Object> exports);
 
 	inline bool isCompiled() const { return _compiled; }
 	const char* getOutput() const;
@@ -26,12 +27,10 @@ private:
 
 	static NAN_METHOD(New);
 	static NAN_METHOD(Dispose);
-
 	static NAN_METHOD(Compiled);
 	static NAN_METHOD(Output);
 	static NAN_METHOD(RawOutput);
 	static NAN_METHOD(Log);
-	static v8::Persistent<v8::Function> constructor;
-};
 
-#endif
+	static Nan::Persistent<v8::Function> constructor;
+};

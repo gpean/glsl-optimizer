@@ -1,13 +1,13 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#pragma once
 
-#include <node.h>
 #include <nan.h>
+
 #include <glsl_optimizer.h>
 
-class Compiler : public node::ObjectWrap {
+class Compiler : public Nan::ObjectWrap
+{
 public:
-	static void Init(v8::Handle<v8::Object> exports);
+	static void Init(v8::Local<v8::Object> exports);
 
 	inline glslopt_ctx* getBinding() const { return _binding; }
 
@@ -21,7 +21,6 @@ private:
 
 	static NAN_METHOD(New);
 	static NAN_METHOD(Dispose);
-	static v8::Persistent<v8::Function> constructor;
-};
 
-#endif
+	static Nan::Persistent<v8::Function> constructor;
+};

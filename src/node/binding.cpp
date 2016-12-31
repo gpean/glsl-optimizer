@@ -8,11 +8,11 @@ using namespace v8;
 void InitAll(Handle<Object> exports)
 {
 	// Export constants
-	exports->Set(String::NewSymbol("VERTEX_SHADER"), Int32::New(kGlslOptShaderVertex), ReadOnly);
-	exports->Set(String::NewSymbol("FRAGMENT_SHADER"), Int32::New(kGlslOptShaderFragment), ReadOnly);
-	exports->Set(String::NewSymbol("TARGET_OPENGL"), Int32::New(kGlslTargetOpenGL), ReadOnly);
-	exports->Set(String::NewSymbol("TARGET_OPENGLES20"), Int32::New(kGlslTargetOpenGLES20), ReadOnly);
-	exports->Set(String::NewSymbol("TARGET_OPENGLES30"), Int32::New(kGlslTargetOpenGLES30), ReadOnly);
+    Nan::Set(exports, Nan::New<String>("VERTEX_SHADER").ToLocalChecked(), Nan::New<Integer>(kGlslOptShaderVertex));
+    Nan::Set(exports, Nan::New<String>("FRAGMENT_SHADER").ToLocalChecked(), Nan::New<Integer>(kGlslOptShaderFragment));
+    Nan::Set(exports, Nan::New<String>("TARGET_OPENGL").ToLocalChecked(), Nan::New<Integer>(kGlslTargetOpenGL));
+    Nan::Set(exports, Nan::New<String>("TARGET_OPENGLES20").ToLocalChecked(), Nan::New<Integer>(kGlslTargetOpenGLES20));
+    Nan::Set(exports, Nan::New<String>("TARGET_OPENGLES30").ToLocalChecked(), Nan::New<Integer>(kGlslTargetOpenGLES30));
 	
 	// Export classes
 	Compiler::Init(exports);

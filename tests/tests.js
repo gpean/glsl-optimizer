@@ -1,9 +1,10 @@
-var glslOptimizer = require('../');
+var glslOptimizer = require('../build/Release/glslOptimizer');
+
 var assert = require('assert');
 
 var fs = require('fs');
 var path = require('path');
-var frag = fs.readFileSync( path.join( __dirname, 'fragment', 'glsl140-basic-in.txt' ), 'utf8' );
+var frag = fs.readFileSync( path.join( __dirname, 'fragment', 'zunity-MotionBlur-TileMax-in.txt' ), 'utf8' );
 
 assert.equal(glslOptimizer.TARGET_OPENGL, 0, 'exports TARGET_OPENGL');
 assert.equal(glslOptimizer.TARGET_OPENGLES20, 1, 'exports TARGET_OPENGLES20');
@@ -14,7 +15,7 @@ assert.equal(typeof glslOptimizer.Compiler, 'function', 'exports Compiler constr
 
 var ESSL = false; 
 
-//First we need to create a new compiler
+// First we need to create a new compiler
 var compiler = new glslOptimizer.Compiler(2);
 
 assert.equal(typeof compiler.dispose, 'function', 'exports Compiler#dispose()');
@@ -31,7 +32,10 @@ assert.equal(typeof raw, 'string', 'exports rawOutput()');
 assert.equal(typeof output, 'string', 'exports output()');
 assert.equal(typeof log, 'string', 'exports log()');
 
-console.log(output, didCompile);
+console.log("output:", output);
+console.log("raw:", raw);
+console.log("didCompile:", didCompile);
+console.log("log:", log);
 
 //Clean up shader...
 shader.dispose();

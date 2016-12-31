@@ -1,15 +1,18 @@
 #include "shader.h"
+
 #include <nan.h>
 
-using namespace v8;
-using namespace node;
+#include <iostream>
 
-Persistent<Function> Shader::constructor;
+Nan::Persistent<v8::Function> Shader::constructor;
 
 //----------------------------------------------------------------------
 
 Shader::Shader(Compiler* compiler, int type, const char* source)
 {
+    //std::cerr << "compiler:" << compiler << std::endl;
+    //std::cerr << "type:" << type << std::endl;
+    //std::cerr << "source:" << source << std::endl;
 	if (compiler)
 	{
 		_binding = glslopt_optimize(compiler->getBinding(), (glslopt_shader_type)type, source, 0);
@@ -59,124 +62,127 @@ const char* Shader::getRawOutput() const
 
 const char* Shader::getLog() const
 {
-	return (_compiled) ? glslopt_get_log(_binding) : "";
+	auto s = glslopt_get_log(_binding);
+    if (!s) return "";
+    return s;
 }
 
 //----------------------------------------------------------------------
 
-void Shader::Init(Handle<Object> exports)
+void Shader::Init(v8::Local<v8::Object> exports) 
 {
-	NanScope();
+    using namespace v8;
+	Nan::HandleScope scope;
 
 	// Prepare constructor template
-	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
-	tpl->SetClassName(NanNew<String>("Shader"));
+	Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+	tpl->SetClassName(Nan::New("Shader").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 	// Prototype
-	NanSetPrototypeTemplate(tpl, "dispose", NanNew<FunctionTemplate>(Dispose));
-	NanSetPrototypeTemplate(tpl, "compiled", NanNew<FunctionTemplate>(Compiled));
-	NanSetPrototypeTemplate(tpl, "output", NanNew<FunctionTemplate>(Output));
-	NanSetPrototypeTemplate(tpl, "rawOutput", NanNew<FunctionTemplate>(RawOutput));
-	NanSetPrototypeTemplate(tpl, "log", NanNew<FunctionTemplate>(Log));
+	Nan::SetPrototypeMethod(tpl, "dispose", Dispose);
+	Nan::SetPrototypeMethod(tpl, "compiled", Compiled);
+	Nan::SetPrototypeMethod(tpl, "output", Output);
+	Nan::SetPrototypeMethod(tpl, "rawOutput", RawOutput);
+	Nan::SetPrototypeMethod(tpl, "log", Log);
 
 	// Export the class
-	NanAssignPersistent<Function>(constructor, tpl->GetFunction());
-	exports->Set(NanNew<String>("Shader"), tpl->GetFunction());
+    constructor.Reset(tpl->GetFunction());
+	exports->Set(Nan::New("Shader").ToLocalChecked(), tpl->GetFunction());
 }
 
 //----------------------------------------------------------------------
 
-Handle<Value> Shader::New(const Arguments& args)
+void Shader::New(const Nan::FunctionCallbackInfo<v8::Value>& info) 
 {
-	NanScope();
-
-	if (args.Length() == 3)
-	{
-		// Check the first parameter (compiler)
-		Local<Value> args0 = args[0];
-
-		if (args0->IsObject())
-		{
-			// Check the second parameter (shader type)
-			Local<Value> args1 = args[1];
-
-			if (args1->IsInt32())
-			{
-				// Check the third parameter (source code)
-				Local<Value> args2 = args[2];
-
-				if (args2->IsString())
-				{
-					Compiler* compiler = ObjectWrap::Unwrap<Compiler>(args0->ToObject());
-					int type = args1->Int32Value();
-					String::Utf8Value sourceCode(args2->ToString());
-	
-					Shader* obj = new Shader(compiler, type, *sourceCode);
-					obj->Wrap(args.This());
-
-					return args.This();
-				}
-			}
-		}
-	}
-
-	// Couldn't create the Shader
-	NanThrowError("Invalid arguments");
+    using namespace v8;
+	Nan::HandleScope scope;
+    if (info.IsConstructCall()) { // Invoked as constructor: `new Shader(...)`
+        if (info.Length() != 3) {
+            Nan::ThrowError("Invalid arguments");
+            return;
+        }
+        if (!info[0]->IsObject()) {
+            Nan::ThrowError("Invalid arguments");
+            return;
+        }
+        if (!info[1]->IsInt32()) {
+            Nan::ThrowError("Invalid arguments");
+            return;
+        }
+        if (!info[2]->IsString()) {
+            Nan::ThrowError("Invalid arguments");
+            return;
+        }
+        auto obj = new Shader(ObjectWrap::Unwrap<Compiler>(info[0]->ToObject()), 
+            info[1]->Int32Value(), *Nan::Utf8String(info[2]->ToString()));
+        obj->Wrap(info.This());
+        info.GetReturnValue().Set(info.This());
+    } else { // Invoked as plain function `Shader(...)`, turn into construct call.
+        const int argc = 1;
+        v8::Local<v8::Value> argv[argc] = { info[0] };
+        v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
+        info.GetReturnValue().Set(cons->NewInstance(argc, argv));
+    }
 }
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Shader::Dispose)
+NAN_METHOD(Shader::Dispose) 
 {
-	NanScope();
-
-	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
-	obj->release();
-
-	NanReturnUndefined();
+    using namespace v8;
+    Nan::HandleScope scope;
+    auto obj = ObjectWrap::Unwrap<Shader>(info.Holder());
+    obj->release();
 }
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Shader::Compiled)
+NAN_METHOD(Shader::Compiled) 
 {
-	NanScope();
-
-	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
-
-	NanReturnValue(NanNew<Boolean>(obj->isCompiled()));
+    using namespace v8;
+    Nan::HandleScope scope;
+    auto obj = ObjectWrap::Unwrap<Shader>(info.Holder());
+    info.GetReturnValue().Set(Nan::New(obj->isCompiled()));
 }
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Shader::Output)
+NAN_METHOD(Shader::Output) 
 {
-	NanScope();
-
-	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
-
-	NanReturnValue(NanNew<String>(obj->getOutput()));
+    using namespace v8;
+    Nan::HandleScope scope;
+    auto obj = ObjectWrap::Unwrap<Shader>(info.Holder());
+    info.GetReturnValue().Set(Nan::New(obj->getOutput()).ToLocalChecked());
 }
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Shader::RawOutput)
+NAN_METHOD(Shader::RawOutput) 
 {
-	NanScope();
-
-	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
-
-	NanReturnValue(NanNew<String>(obj->getRawOutput()));
+    using namespace v8;
+    Nan::HandleScope scope;
+    auto obj = ObjectWrap::Unwrap<Shader>(info.Holder());
+    info.GetReturnValue().Set(Nan::New(obj->getRawOutput()).ToLocalChecked());
 }
 
 //----------------------------------------------------------------------
 
-NAN_METHOD(Shader::Log)
+NAN_METHOD(Shader::Log) 
 {
-	NanScope();
-
-	Shader* obj = ObjectWrap::Unwrap<Shader>(args.This());
-
-	NanReturnValue(NanNew<String>(obj->getLog()));
+    using namespace v8;
+    Nan::HandleScope scope;
+    auto obj = ObjectWrap::Unwrap<Shader>(info.Holder());
+    info.GetReturnValue().Set(Nan::New(obj->getLog()).ToLocalChecked());
 }
+
+/*
+wrapMethod(fn)
+{
+    std::function<void(Nan::FunctionCallbackInfo<v8::Value> const*)> wfn = []() {
+        Nan::HandleScope scope;
+        auto obj = ObjectWrap::Unwrap<Shader>(info.Holder());
+        info.GetReturnValue().Set(Nan::New((*obj).*fn()).ToLocalChecked());
+    };
+}
+*/
