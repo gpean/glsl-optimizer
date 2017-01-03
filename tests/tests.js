@@ -16,7 +16,7 @@ assert.equal(typeof glslOptimizer.Compiler, 'function', 'exports Compiler constr
 var ESSL = false; 
 
 // First we need to create a new compiler
-var compiler = new glslOptimizer.Compiler(2);
+var compiler = new glslOptimizer.Compiler(glslOptimizer.TARGET_OPENGLES20);
 
 assert.equal(typeof compiler.dispose, 'function', 'exports Compiler#dispose()');
 

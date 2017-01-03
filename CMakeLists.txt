@@ -17,18 +17,21 @@ else()
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -s")
 endif()
 
-file(GLOB glcpp-library_sources src/glsl/glcpp/*.c src/util/*.c)
+file(GLOB glcpp-library_sources src/glsl/glcpp/*.c src/util/*.c src/glsl/glcpp/*.h src/util/*.h)
 #file(GLOB glcpp-library_sources_remove src/glsl/glcpp/glcpp.c)
 #list(REMOVE_ITEM glcpp-library_sources ${glcpp-library_sources_remove})
 add_library(glcpp-library ${glcpp-library_sources})
 
-file(GLOB mesa_sources src/mesa/program/*.c src/mesa/main/*.c)
+file(GLOB mesa_sources src/mesa/program/*.c src/mesa/program/*.h src/mesa/main/*.c src/mesa/main/*.h)
 add_library(mesa ${mesa_sources})
 
-file(GLOB glsl_sources src/glsl/*.cpp src/glsl/*.c)
+file(GLOB glsl_sources src/glsl/*.cpp src/glsl/*.c src/glsl/*.h src/glsl/*.hpp)
 file(GLOB glsl_sources_remove src/glsl/main.cpp src/glsl/builtin_stubs.cpp)
 list(REMOVE_ITEM glsl_sources ${glsl_sources_remove})
 add_library(glsl_optimizer ${glsl_sources})
+
+message("XXX ${mesa_sources} ${glcpp-library_sources} ${glsl_sources}")
+
 target_link_libraries(glsl_optimizer glcpp-library mesa)
 
 add_executable(glsl_compiler src/glsl/main.cpp)

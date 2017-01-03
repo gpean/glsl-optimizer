@@ -10,18 +10,15 @@ Nan::Persistent<v8::Function> Shader::constructor;
 
 Shader::Shader(Compiler* compiler, int type, const char* source)
 {
-    //std::cerr << "compiler:" << compiler << std::endl;
-    //std::cerr << "type:" << type << std::endl;
-    //std::cerr << "source:" << source << std::endl;
+    _binding = nullptr;
+	_compiled = false;
 	if (compiler)
 	{
 		_binding = glslopt_optimize(compiler->getBinding(), (glslopt_shader_type)type, source, 0);
-		_compiled = glslopt_get_status(_binding);
-	}
-	else
-	{
-		_binding = 0;
-		_compiled = false;
+        if (_binding)
+        {
+		    _compiled = glslopt_get_status(_binding);
+        }
 	}
 }
 
@@ -36,18 +33,17 @@ Shader::~Shader()
 
 void Shader::release()
 {
-	if (_binding)
-	{
-		glslopt_shader_delete(_binding);
-		_binding = 0;
-		_compiled = false;
-	}
+    if (!_binding) return;
+    glslopt_shader_delete(_binding);
+    _binding = nullptr;
+    _compiled = false;
 }
 
 //----------------------------------------------------------------------
 
 const char* Shader::getOutput() const
 {
+    if (!_binding) return "";
 	return (_compiled) ? glslopt_get_output(_binding) : "";
 }
 
@@ -55,6 +51,7 @@ const char* Shader::getOutput() const
 
 const char* Shader::getRawOutput() const
 {
+    if (!_binding) return "";
 	return (_compiled) ? glslopt_get_raw_output(_binding) : "";
 }
 
@@ -62,6 +59,7 @@ const char* Shader::getRawOutput() const
 
 const char* Shader::getLog() const
 {
+    if (!_binding) return "";
 	auto s = glslopt_get_log(_binding);
     if (!s) return "";
     return s;
