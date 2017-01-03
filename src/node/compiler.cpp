@@ -55,11 +55,15 @@ void Compiler::New(const Nan::FunctionCallbackInfo<v8::Value>& info)
     using namespace v8;
 	Nan::HandleScope scope;
     if (info.IsConstructCall()) { // Invoked as constructor: `new Compiler(...)`
-        glslopt_target target = kGlslTargetOpenGL;
-		if (info[0]->IsInt32()) 
-			target = (glslopt_target)info[0]->Int32Value();
-		else if (info[0]->IsBoolean())
-			target = (glslopt_target)( (int)info[0]->BooleanValue() );
+        if (!info[0]->IsNumber()) {
+            Nan::ThrowError("Invalid target, a number is required");
+            return;
+        }
+        glslopt_target target = (glslopt_target)info[0]->Int32Value();
+        if (target < 0 || target > kGlslTargetMetal) {
+            Nan::ThrowError("Invalid target");
+            return;
+        }
         auto obj = new Compiler(target);
         obj->Wrap(info.This());
         info.GetReturnValue().Set(info.This());
